@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api, download } from '../services/api';
 import { useAuth } from '../App';
 
@@ -12,6 +12,7 @@ interface Resume {
 
 const Dashboard: React.FC = () => {
   const auth = useAuth();
+  const navigate = useNavigate();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,8 +23,12 @@ const Dashboard: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const query = all ? '?all=1' : '';
-      const data = await api(`/resumes${query}`);
+      if (all && auth.role === 'Admin') {
+        // Redirect to Admin panel for global resume view
+        navigate('/admin');
+        return;
+      }
+      const data = await api('/resumes');
       setResumes(data);
     } catch (err: any) {
       setError(err.message);
@@ -33,8 +38,8 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData(showAll && auth.role === 'Admin');
-  }, [showAll, auth.role]);
+    loadData(showAll);
+  }, [showAll]);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Delete this resume? This action cannot be undone.')) return;
@@ -68,7 +73,7 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setShowAll(e.target.checked)}
               style={{ marginRight: '0.25rem' }}
             />
-            Show all resumes
+            View all resumes (Admin Panel)
           </label>
         )}
       </div>

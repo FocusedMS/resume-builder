@@ -8,6 +8,7 @@ using ResumeApi.Data;
 using ResumeApi.Models;
 using ResumeApi.Repositories;
 using ResumeApi.Services;
+using ResumeApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -125,22 +126,7 @@ app.UseAuthorization();
 // Map API controllers
 app.MapControllers();
 
-// Seed predefined roles (Admin, RegisteredUser, Guest) at startup
-await SeedRolesAsync(app);
+// Seed identity (roles + admin user) at startup
+await app.SeedIdentityAsync();
 
 app.Run();
-
-// Local function to ensure roles exist
-static async Task SeedRolesAsync(WebApplication app)
-{
-    using var scope = app.Services.CreateScope();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] { "Admin", "RegisteredUser", "Guest" };
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            await roleManager.CreateAsync(new IdentityRole(role));
-        }
-    }
-}
