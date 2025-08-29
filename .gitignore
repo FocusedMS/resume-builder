@@ -1,0 +1,5 @@
+﻿node_modules/
+frontend/node_modules/
+**/bin/
+**/obj/
+.vs/
