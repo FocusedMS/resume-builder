@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, download } from '../services/api';
 
 interface Suggestion {
   section: string;
@@ -97,13 +97,16 @@ const Builder: React.FC = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (isNew) {
       setMessage('Please save the resume before downloading');
       return;
     }
-    const url = `${import.meta.env.VITE_API_URL}/api/resumes/download/${id}`;
-    window.open(url, '_blank');
+    try {
+      await download(`/resumes/download/${id}`, `${resume.title || 'resume'}.pdf`);
+    } catch (err: any) {
+      setMessage(err.message || 'Download failed');
+    }
   };
 
   const handleSuggestions = async () => {

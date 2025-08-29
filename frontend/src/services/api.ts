@@ -36,3 +36,25 @@ export async function api(path: string, options: RequestInit = {}) {
     return undefined;
   }
 }
+
+// Download a binary file while including auth header
+export async function download(path: string, suggestedFileName: string) {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${API_URL}/api${path}`, { headers });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = suggestedFileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}

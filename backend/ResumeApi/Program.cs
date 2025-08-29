@@ -77,7 +77,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy => policy
-            .WithOrigins("http://localhost:5173", "http://192.168.1.4:5173")
+            .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -116,7 +116,8 @@ app.UseSerilogRequestLogging();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+app.UseRouting();
+// Enable CORS before auth and endpoints so all responses include headers
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();

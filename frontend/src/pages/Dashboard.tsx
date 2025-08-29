@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, download } from '../services/api';
 import { useAuth } from '../App';
 
 interface Resume {
@@ -46,10 +46,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDownload = (id: number) => {
-    // Use the browser to download the file directly
-    const url = `${import.meta.env.VITE_API_URL}/api/resumes/download/${id}`;
-    window.open(url, '_blank');
+  const handleDownload = async (id: number) => {
+    try {
+      await download(`/resumes/download/${id}`, `resume-${id}.pdf`);
+    } catch (err: any) {
+      alert(err.message || 'Download failed');
+    }
   };
 
   const filtered = resumes.filter((r) => r.title.toLowerCase().includes(filter.toLowerCase()));
