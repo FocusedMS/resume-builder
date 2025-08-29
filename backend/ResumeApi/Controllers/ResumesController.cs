@@ -220,46 +220,73 @@ namespace ResumeApi.Controllers
             // Helper to trim, normalise newlines, strip control characters
             string Clean(string? input)
             {
-                var text = input ?? string.Empty;
-                text = text.Trim();
-                text = text.Replace("\r\n", "\n");
+                if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+                
+                var text = input.Trim();
+                // Normalize line endings
+                text = text.Replace("\r\n", "\n").Replace("\r", "\n");
+                
                 var filtered = new System.Text.StringBuilder();
                 foreach (var ch in text)
                 {
-                    if (char.IsControl(ch) && ch != '\n' && ch != '\r' && ch != '\t')
+                    // Allow only safe control characters
+                    if (char.IsControl(ch) && ch != '\n' && ch != '\t')
                         continue;
                     filtered.Append(ch);
                 }
                 return filtered.ToString();
             }
-            // Reject script or iframe tags
+            
+            // Reject script, iframe, and other dangerous tags
             bool ContainsDangerous(string text)
             {
+                if (string.IsNullOrWhiteSpace(text)) return false;
+                
                 var lower = text.ToLowerInvariant();
-                return lower.Contains("<script") || lower.Contains("<iframe");
+                var dangerousPatterns = new[]
+                {
+                    "<script", "</script>", "<iframe", "</iframe>", 
+                    "javascript:", "vbscript:", "onload=", "onerror=",
+                    "onclick=", "onmouseover=", "eval(", "document.cookie"
+                };
+                
+                return dangerousPatterns.Any(pattern => lower.Contains(pattern));
             }
+            
+            // Clean all fields
             var p = Clean(dto.PersonalInfo);
             var e = Clean(dto.Education);
             var ex = Clean(dto.Experience);
             var s = Clean(dto.Skills);
-            if (ContainsDangerous(p) || ContainsDangerous(e) || ContainsDangerous(ex) || ContainsDangerous(s))
+            var t = Clean(dto.Title);
+            
+            // Check for dangerous content
+            if (ContainsDangerous(p) || ContainsDangerous(e) || ContainsDangerous(ex) || ContainsDangerous(s) || ContainsDangerous(t))
             {
-                return (dto, "Input contains prohibited tags.");
+                return (dto, "Input contains prohibited content or tags.");
             }
-            var totalLen = (p?.Length ?? 0) + (e?.Length ?? 0) + (ex?.Length ?? 0) + (s?.Length ?? 0);
+            
+            // Enforce payload size limit (40,000 chars across all text fields)
+            var totalLen = p.Length + e.Length + ex.Length + s.Length + t.Length;
             if (totalLen > 40000)
             {
-                return (dto, "The combined length of text fields exceeds 40,000 characters.");
+                return (dto, $"The combined length of text fields ({totalLen:N0}) exceeds the maximum limit of 40,000 characters.");
             }
+            
+            // Validate template style
+            var validTemplates = new[] { "classic", "minimal", "modern" };
+            var templateStyle = validTemplates.Contains(dto.TemplateStyle) ? dto.TemplateStyle : "classic";
+            
             var sanitized = new ResumeDto
             {
-                Title = Clean(dto.Title),
+                Title = t,
                 PersonalInfo = p,
                 Education = e,
                 Experience = ex,
                 Skills = s,
-                TemplateStyle = dto.TemplateStyle
+                TemplateStyle = templateStyle
             };
+            
             return (sanitized, null);
         }
     }

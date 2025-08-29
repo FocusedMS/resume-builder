@@ -68,7 +68,7 @@ namespace ResumeApi.Controllers
         [HttpPost("users/{id}/roles")]
         public async Task<IActionResult> ChangeRole(string id, [FromBody] dynamic body)
         {
-            string role = body?.role;
+            string? role = body?.role?.ToString();
             if (string.IsNullOrWhiteSpace(role))
             {
                 return BadRequest(new { message = "Role is required." });
@@ -96,7 +96,7 @@ namespace ResumeApi.Controllers
         [HttpPost("users/{id}/add-role")]
         public async Task<IActionResult> AddRole(string id, [FromBody] dynamic body)
         {
-            string role = body?.role;
+            string? role = body?.role?.ToString();
             if (string.IsNullOrWhiteSpace(role))
             {
                 return BadRequest(new { message = "Role is required." });
@@ -300,9 +300,9 @@ namespace ResumeApi.Controllers
                 resume.AiSuggestionsJson,
                 Owner = new
                 {
-                    resume.User.Id,
-                    resume.User.Email,
-                    resume.User.FullName
+                    Id = resume.User?.Id ?? "",
+                    Email = resume.User?.Email ?? "",
+                    FullName = resume.User?.FullName ?? ""
                 }
             });
         }
